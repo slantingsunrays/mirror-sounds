@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<title>Mirror Sounds</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link rel="stylesheet" href="main.css">
+</head>
+<body>
+<script src="https://zimjs.org/cdn/1.3.2/createjs.js"></script>
+<script src="https://zimjs.org/cdn/cat/03/zim.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/THREEx.WindowResize.js"></script>
+<script src="js/THREEx.FullScreen.js"></script>
+<script src="js/KeyboardState.js"></script>
+
+<script src="js/Three.js"></script>
+<script src="js/Detector.js"></script>
+<script src="js/THREEx.KeyboardState.js"></script>
+
+
+<!-- ------------------------------------------------------------ -->
+
+<div id="overlay">
+	<button id="startButton">Play</button>
+</div>
+
+<div id="info">
+	<h1>Welcome to Mirror Sounds</h1>
+	Project created by: <a href="#" target="_blank" rel="">Amy Szczepanowski</a>,
+	<a href="#" target="_blank" rel="">You-you Hou</a>, and <a href="#" target="_blank" rel="">Fiona Ho</a><br>
+	<br>Navigate with the sphere by WASD and look around with the mouse
+
+</div>
+
+<div id="bg"></div>
+
+<div id="ThreeJS" style="position: absolute; left:0px; top:0px"></div>
+
+<script>
+    const startButton = document.getElementById( 'startButton' );
+    startButton.addEventListener( 'click', gameStart );
+
+
+// standard global variables
+var container, scene, camera, renderer, controls;
+var keyboard = new THREEx.KeyboardState();
+var clock = new THREE.Clock();
+
+// custom global variables // for mirror material
+var mirrorCube1, mirrorCubeCamera1;
+var mirrorCube2, mirrorCubeCamera2;
+var mirrorCube3, mirrorCubeCamera3;
+var mirrorCube4, mirrorCubeCamera4;
+var mirrorCube5, mirrorCubeCamera5;
+var mirrorSphere, mirrorSphereCamera; // for mirror material
+
+// SCENE
+scene = new THREE.Scene();
+// CAMERA
+var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+var VIEW_ANGLE = 70, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
+scene.add(camera);
+camera.position.set(0,800,1500);
+camera.lookAt(scene);
+
+// create an AudioListener and add it to the camera
+const listener = new THREE.AudioListener();
+camera.add( listener );
+
+// create a global audio source
+const sound = new THREE.Audio( listener );
+const sound2 = new THREE.Audio( listener );
+const sound3 = new THREE.Audio( listener );
+const sound4 = new THREE.Audio( listener );
+const sound5 = new THREE.Audio( listener );
+const sound6 = new THREE.Audio( listener );
+
+// SOUND
+const audioLoader = new THREE.AudioLoader();
+audioLoader.load( 'sounds/G.mp3', function( buffer ) {
+sound.setBuffer( buffer );
+sound.setLoop( false );
+sound.setVolume( .5 );
+});
+
+const audioLoader2 = new THREE.AudioLoader();
+audioLoader2.load( 'sounds/F.mp3', function( buffer ) {
+sound2.setBuffer( buffer );
+sound2.setLoop( false );
+sound2.setVolume( .5 );
+});
+
+const audioLoader3 = new THREE.AudioLoader();
+audioLoader3.load( 'sounds/E.mp3', function( buffer ) {
+sound3.setBuffer( buffer );
+sound3.setLoop( false );
+sound3.setVolume( .5 );
+});
+
+const audioLoader4 = new THREE.AudioLoader();
+audioLoader4.load( 'sounds/D.mp3', function( buffer ) {
+sound4.setBuffer( buffer );
+sound4.setLoop( false );
+sound4.setVolume( .5 );
+});
+
+const audioLoader5 = new THREE.AudioLoader();
+audioLoader5.load( 'sounds/C.mp3', function( buffer ) {
+sound5.setBuffer( buffer );
+sound5.setLoop( false );
+sound5.setVolume( .5 );
+});
+
+const audioLoader6 = new THREE.AudioLoader();
+audioLoader6.load( 'sounds/music.mp3', function( buffer ) {
+sound6.setBuffer( buffer );
+sound6.setLoop( true );
+sound6.setVolume( .9 );
+});
+
+function gameStart() { 
+    init();
+    animate();
+}
+
+
+// FUNCTIONS 		
+function init() 
+{
+
+    const overlay = document.getElementById( 'overlay' );
+	overlay.remove();
+    
+    const info = document.getElementById( 'info' );
+	info.remove();
+
+	const bg = document.getElementById( 'bg' );
+	bg.remove();
+
+	sound6.play();
+
+	// SCENE
+	// RENDERER
+	if ( Detector.webgl )
+		renderer = new THREE.WebGLRenderer( {antialias:true} );
+	else
+		renderer = new THREE.CanvasRenderer(); 
+	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+	container = document.getElementById( 'ThreeJS' );
+	container.appendChild( renderer.domElement );
+		
+	
+	// EVENTS
+	THREEx.WindowResize(renderer, camera);
+	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
+
+	
+	
+	// CONTROLS
+	controls = new THREE.OrbitControls( camera, renderer.domElement );
+
+	
+	// LIGHT
+	const light = new THREE.PointLight(0xEA9999, 3);
+	light.position.set(0, 10000, 2000);
+	// light.castShadow = true;
+	scene.add(light);
+
+	const light2 = new THREE.AmbientLight(0xffffff, 1);
+	light2.position.set(0, 7000, 1000);
+	scene.add(light2);
+	
+
+	// FLOOR
+	// const floorTexture = new THREE.ImageUtils.loadTexture("skybox/meadow_rt.png");
+	// floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; //RepeatWrapping is stored on three as a var or const
+	// floorTexture.repeat.set(1, 1);
+	// const floorMaterial = new THREE.MeshBasicMaterial({map: floorTexture, side: THREE.DoubleSide}); // no shading no color, no lighting is needed; const floorTexture is mapped to it
+	// const floorGeometry = new THREE.PlaneGeometry(150000, 150000, 10, 10); // plane can be formed with triangles so setting the 10, 10 will affect smoothness
+	// const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+	// floor.position.y = -100;
+	// floor.rotation.x = (90 * Math.PI) / 180; // 45c need to use radians instead, degree is big number, radians is small
+	// //floor.rotation.x = Math.PI/2; // rotation in radians 90 Degrees; one PI is 180 degree and 2 PT is 360 degree
+	// floor.receiveShadow = true;
+	// floor.material.transparent = true;
+	// floor.material.opacity = .40;
+	// scene.add(floor);
+
+		
+	
+	// SKYBOX/FOG
+	var materialArray = [];
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'skybox/meadow_ft.png' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'skybox/meadow_bk.png' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'skybox/meadow_up.png' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'skybox/meadow_dn.png' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'skybox/meadow_rt.png' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'skybox/meadow_lf.png' ) }));
+	for (var i = 0; i < 6; i++) materialArray[i].side = THREE.BackSide;
+		var skyboxMaterial = new THREE.MeshFaceMaterial( materialArray );
+		var skyboxGeom = new THREE.CubeGeometry( 10000, 10000, 10000, 1, 1, 1 );
+		var skybox = new THREE.Mesh( skyboxGeom, skyboxMaterial );
+		scene.add( skybox );	
+
+	
+	// Mirror cubes and Sphere
+	const startPointX = 1300;
+	const distance = 500;
+
+	var cubeGeom1 = new THREE.CubeGeometry(115, 115, 115, 1, 1, 1);
+	mirrorCubeCamera1 = new THREE.CubeCamera( 0.1, 5000, 512 );
+	scene.add( mirrorCubeCamera1 );
+	var mirrorCubeMaterial1 = new THREE.MeshBasicMaterial( { envMap: mirrorCubeCamera1.renderTarget } );
+	mirrorCube1 = new THREE.Mesh( cubeGeom1, mirrorCubeMaterial1 );
+	mirrorCube1.position.set(startPointX-distance,50,0);
+	mirrorCubeCamera1.position = mirrorCube1.position;
+	scene.add(mirrorCube1);	
+
+	var cubeGeom2 = new THREE.CubeGeometry(115, 115, 115, 1, 1, 1);
+	mirrorCubeCamera2 = new THREE.CubeCamera( 0.1, 5000, 512 );
+	scene.add( mirrorCubeCamera2 );
+	var mirrorCubeMaterial2 = new THREE.MeshBasicMaterial( { envMap: mirrorCubeCamera2.renderTarget } );
+	mirrorCube2 = new THREE.Mesh( cubeGeom2, mirrorCubeMaterial2 );
+	mirrorCube2.position.set(startPointX-distance*2,50,0);
+	mirrorCubeCamera2.position = mirrorCube2.position;
+	scene.add(mirrorCube2);	
+
+	var cubeGeom3 = new THREE.CubeGeometry(115, 115, 115, 1, 1, 1);
+	mirrorCubeCamera3 = new THREE.CubeCamera( 0.1, 5000, 512 );
+	scene.add( mirrorCubeCamera3 );
+	var mirrorCubeMaterial3 = new THREE.MeshBasicMaterial( { envMap: mirrorCubeCamera3.renderTarget } );
+	mirrorCube3 = new THREE.Mesh( cubeGeom3, mirrorCubeMaterial3 );
+	mirrorCube3.position.set(startPointX-distance*3,50,0);
+	mirrorCubeCamera3.position = mirrorCube3.position;
+	scene.add(mirrorCube3);	
+
+	var cubeGeom4 = new THREE.CubeGeometry(115, 115, 115, 1, 1, 1);
+	mirrorCubeCamera4 = new THREE.CubeCamera( 0.1, 5000, 512 );
+	scene.add( mirrorCubeCamera4 );
+	var mirrorCubeMaterial4 = new THREE.MeshBasicMaterial( { envMap: mirrorCubeCamera4.renderTarget } );
+	mirrorCube4 = new THREE.Mesh( cubeGeom4, mirrorCubeMaterial4 );
+	mirrorCube4.position.set(startPointX-distance*4,50,0);
+	mirrorCubeCamera4.position = mirrorCube4.position;
+	scene.add(mirrorCube4);	
+
+	var cubeGeom5 = new THREE.CubeGeometry(115, 115, 115, 1, 1, 1);
+	mirrorCubeCamera5 = new THREE.CubeCamera( 0.1, 5000, 512 );
+	scene.add( mirrorCubeCamera5 );
+	var mirrorCubeMaterial5 = new THREE.MeshBasicMaterial( { envMap: mirrorCubeCamera5.renderTarget } );
+	mirrorCube5 = new THREE.Mesh( cubeGeom5, mirrorCubeMaterial5 );
+	mirrorCube5.position.set(startPointX-distance*5,50,0);
+	mirrorCubeCamera5.position = mirrorCube5.position;
+	scene.add(mirrorCube5);	
+	
+	var sphereGeom =  new THREE.SphereGeometry( 50, 32, 16 ); // radius, segmentsWidth, segmentsHeight
+	mirrorSphereCamera = new THREE.CubeCamera( 0.1, 5000, 512 );
+	scene.add( mirrorSphereCamera );
+	var mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera.renderTarget } );
+	mirrorSphere = new THREE.Mesh( sphereGeom, mirrorSphereMaterial );
+	mirrorSphere.position.set(startPointX,50,0);
+	mirrorSphereCamera.position = mirrorSphere.position;
+	scene.add(mirrorSphere);
+
+
+	var xSpeed = 20;
+	var ySpeed = 20;
+        
+        
+	document.addEventListener("keydown", onkeydown, false);
+	function onkeydown(event) {
+		//controls.type = false;
+		var keyCode = event.which;
+		if (keyCode == 87) {
+		mirrorSphere.position.z -= ySpeed;
+		
+		} else if (keyCode == 83) {
+		mirrorSphere.position.z += ySpeed;
+		
+		} else if (keyCode == 68) {
+		mirrorSphere.position.x += xSpeed;
+		
+		// scene.rotation.y += rotateAngle;
+		} else if (keyCode == 65) {
+		mirrorSphere.position.x -= xSpeed;
+		
+		// scene.rotation.y -= rotateAngle;
+		} else if (keyCode == 90) {
+		mirrorSphere.position.set(75, 50, 0);
+		}
+	}
+
+}
+
+function animate() 
+{
+    requestAnimationFrame( animate );
+	render();		
+	update();
+}
+
+function update()
+{
+    // mirrorCube1.position.x maximum
+    const mcxMax = mirrorCube1.position.x+100;
+    // mirrorCube1.position.x minimum
+    const mcxMin  = mirrorCube1.position.x-100;
+
+    const mcx2Max = mirrorCube2.position.x+100;
+    const mcx2Min = mirrorCube2.position.x-100;
+	
+    const mcx3Max = mirrorCube3.position.x+100;
+    const mcx3Min = mirrorCube3.position.x-100;
+
+	const mcx4Max = mirrorCube4.position.x+100;
+    const mcx4Min = mirrorCube4.position.x-100;
+
+	const mcx5Max = mirrorCube5.position.x+100;
+    const mcx5Min = mirrorCube5.position.x-100;
+
+
+	if( mirrorSphere.position.x <= mcxMax && mirrorSphere.position.x >= mcxMin && mirrorSphere.position.z == mirrorCube1.position.z) sound.play();
+	if( mirrorSphere.position.x <= mcx2Max && mirrorSphere.position.x >= mcx2Min && mirrorSphere.position.z == mirrorCube2.position.z) sound2.play();
+	if( mirrorSphere.position.x <= mcx3Max && mirrorSphere.position.x >= mcx3Min && mirrorSphere.position.z == mirrorCube3.position.z) sound3.play();
+	if( mirrorSphere.position.x <= mcx4Max && mirrorSphere.position.x >= mcx4Min && mirrorSphere.position.z == mirrorCube4.position.z) sound4.play();
+	if( mirrorSphere.position.x <= mcx5Max && mirrorSphere.position.x >= mcx5Min && mirrorSphere.position.z == mirrorCube5.position.z) sound5.play();
+}
+
+function render() 
+{
+	mirrorCube1.rotation.x += 0.01;
+	mirrorCube1.rotation.y += 0.01;
+	mirrorCube1.rotation.z += 0.01;
+
+    mirrorCube2.rotation.x += 0.012;
+	mirrorCube2.rotation.y += 0.012;
+	mirrorCube2.rotation.z += 0.012;
+
+	mirrorCube3.rotation.x += 0.015;
+	mirrorCube3.rotation.y += 0.015;
+	mirrorCube3.rotation.z += 0.015;
+
+	mirrorCube4.rotation.x += 0.019;
+	mirrorCube4.rotation.y += 0.019;
+	mirrorCube4.rotation.z += 0.019;
+
+	mirrorCube5.rotation.x += 0.025;
+	mirrorCube5.rotation.y += 0.025;
+	mirrorCube5.rotation.z += 0.025;
+
+
+	// move the CubeCamera to the position of the object
+	//    that has a reflective surface, "take a picture" in each direction
+	//    and apply it to the surface.
+	// need to hide surface before and after so that it does not
+	//    "get in the way" of the camera
+	mirrorCube1.visible = false;
+	mirrorCubeCamera1.updateCubeMap( renderer, scene );
+	mirrorCube1.visible = true;
+
+    mirrorCube2.visible = false;
+	mirrorCubeCamera2.updateCubeMap( renderer, scene );
+	mirrorCube2.visible = true;
+
+	mirrorCube3.visible = false;
+	mirrorCubeCamera3.updateCubeMap( renderer, scene );
+	mirrorCube3.visible = true;
+
+	mirrorCube4.visible = false;
+	mirrorCubeCamera4.updateCubeMap( renderer, scene );
+	mirrorCube4.visible = true;
+
+	mirrorCube5.visible = false;
+	mirrorCubeCamera5.updateCubeMap( renderer, scene );
+	mirrorCube5.visible = true;
+
+	mirrorSphere.visible = false;
+	mirrorSphereCamera.updateCubeMap( renderer, scene );
+	mirrorSphere.visible = true;
+	
+	renderer.render( scene, camera );
+    controls.update();
+}
+
+
+</script>
+</body>
+</html>
